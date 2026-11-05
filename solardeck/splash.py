@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import math
 
-import numpy as np
 from PySide6.QtCore import QElapsedTimer, QPointF, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QBrush, QColor, QFont, QLinearGradient, QPainter, QPainterPath, QPen, QRadialGradient
 from PySide6.QtWidgets import QApplication, QWidget
@@ -41,15 +40,16 @@ class SplashScreen(QWidget):
         self.x0, self.x1 = W * 0.47, W - 52.0           # plot box
         self.yb, self.yt = H * 0.70, H * 0.20
         n = 360
-        h = np.linspace(0, 24, n)
-        sun = np.clip(np.sin(np.pi * (h - 6.0) / 13.5), 0, None) ** 1.3
-        ripple = 1 - 0.10 * np.sin(h * 2.3) * (sun > 0)
-        self.pv = sun * ripple
-        self.load = (0.16 + 0.30 * np.exp(-((h - 7.5) / 0.9) ** 2) + 0.38 * np.exp(-((h - 13.0) / 1.2) ** 2)
-                     + 0.62 * np.exp(-((h - 20.3) / 1.6) ** 2))
-        self.hx = self.x0 + (self.x1 - self.x0) * h / 24.0
+        h = [24.0 * i / (n - 1) for i in range(n)]
+        self.pv, self.load = [], []
+        for x in h:
+            sun = max(0.0, math.sin(math.pi * (x - 6.0) / 13.5)) ** 1.3
+            self.pv.append(sun * (1 - 0.10 * math.sin(x * 2.3) if sun > 0 else 1.0))
+            self.load.append(0.16 + 0.30 * math.exp(-((x - 7.5) / 0.9) ** 2) + 0.38 * math.exp(-((x - 13.0) / 1.2) ** 2)
+                             + 0.62 * math.exp(-((x - 20.3) / 1.6) ** 2))
+        self.hx = [self.x0 + (self.x1 - self.x0) * x / 24.0 for x in h]
 
-    def _y(self, v: np.ndarray) -> np.ndarray:
+    def _y(self, v: float) -> float:
         return self.yb - v * (self.yb - self.yt)
 
     # ------------------------------------------------------------------ control
@@ -122,13 +122,12 @@ class SplashScreen(QWidget):
             x = self.x0 + (self.x1 - self.x0) * hh / 24
             p.drawText(QRectF(x - 20, self.yb + 6, 40, 14), Qt.AlignCenter, f"{hh:02d}:00")
 
-    def _curve(self, p: QPainter, vals: np.ndarray, m: int, color: str, width: float, fill: bool) -> None:
+    def _curve(self, p: QPainter, vals: list, m: int, color: str, width: float, fill: bool) -> None:
         if m < 2:
             return
-        ys = self._y(vals[:m])
-        path = QPainterPath(QPointF(self.hx[0], ys[0]))
-        for x, y in zip(self.hx[1:m], ys[1:]):
-            path.lineTo(x, y)
+        path = QPainterPath(QPointF(self.hx[0], self._y(vals[0])))
+        for x, v in zip(self.hx[1:m], vals[1:m]):
+            path.lineTo(x, self._y(v))
         col = QColor(color)
         if fill:
             area = QPainterPath(path)
@@ -152,7 +151,7 @@ class SplashScreen(QWidget):
         self._curve(p, self.load, m, theme.LOAD, 2.2, False)
         self._curve(p, self.pv, m, theme.PV, 2.8, True)
         # the sun rides the production curve
-        tip = QPointF(self.hx[m - 1], float(self._y(self.pv[m - 1:m])[0]))
+        tip = QPointF(self.hx[m - 1], self._y(self.pv[m - 1]))
         halo = QRadialGradient(tip, 46)
         halo.setColorAt(0, QColor(251, 191, 36, 190))
         halo.setColorAt(1, QColor(251, 191, 36, 0))
