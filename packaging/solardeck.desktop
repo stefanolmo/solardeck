@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=SolarDeck
+GenericName=SolarEdge monitor
+GenericName[it]=Monitor SolarEdge
+Comment=Live production, consumption and grid flow of a SolarEdge HD-Wave inverter (Modbus TCP)
+Comment[it]=Produzione, consumo e scambio con la rete di un inverter SolarEdge HD-Wave (Modbus TCP)
+Exec=@EXEC@
+Icon=@ICON@
+Terminal=false
+Categories=Utility;Electronics;
+StartupWMClass=solardeck

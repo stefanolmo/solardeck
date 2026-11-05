@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solardeck"
+version = "0.1.0"
+description = "SolarEdge HD-Wave monitor over Modbus TCP: live energy flow, daily totals and production/consumption chart"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["PySide6-Essentials>=6.5"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+solardeck = "solardeck.__main__:main"
+
+[tool.setuptools]
+packages = ["solardeck"]
+
+[tool.setuptools.package-data]
+solardeck = ["solardeck.svg"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

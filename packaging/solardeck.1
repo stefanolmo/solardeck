@@ -1,0 +1,23 @@
+.TH SOLARDECK 1 "2026" "solardeck 0.1.0" "User Commands"
+.SH NAME
+solardeck \- SolarEdge HD-Wave monitor over Modbus TCP
+.SH SYNOPSIS
+.B solardeck
+[\fB\-\-sim\fR] [\fB\-\-sim\-hour\fR \fIH\fR] [\fB\-\-no\-splash\fR]
+.SH DESCRIPTION
+Shows live production, house consumption and grid import/export of a SolarEdge inverter read through
+Modbus TCP (SunSpec), with a production/consumption chart. Settings: gear button or Ctrl+,.
+.SH OPTIONS
+.TP
+.B \-\-sim
+Connect to a built-in simulated inverter (no hardware needed).
+.TP
+.BI \-\-sim\-hour " H"
+Hour of the day at which the simulation starts.
+.TP
+.B \-\-no\-splash
+Skip the splash screen (or set SOLARDECK_NO_SPLASH=1).
+.SH FILES
+.TP
+~/.local/share/solardeck/history.csv
+Sample history used by the chart and the daily totals.
