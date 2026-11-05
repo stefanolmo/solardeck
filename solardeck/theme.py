@@ -155,30 +155,35 @@ def _home(p, c):
 
 
 def _panel(p, c):
-    _poly(p, [(5, 6), (19, 6), (21, 16), (3, 16)], True)
-    _poly(p, [(11.2, 6), (10.4, 16)])
-    _poly(p, [(14.8, 6), (15.6, 16)])
-    _poly(p, [(4, 11), (20, 11)])
-    _poly(p, [(12, 16), (12, 20)])
-    _poly(p, [(8, 20), (16, 20)])
+    _poly(p, [(5.5, 4.5), (18.5, 4.5), (21.5, 14.5), (2.5, 14.5)], True)
+    _poly(p, [(9.8, 4.5), (8.4, 14.5)])
+    _poly(p, [(14.2, 4.5), (15.6, 14.5)])
+    _poly(p, [(4.0, 9.5), (20.0, 9.5)])
+    _poly(p, [(12, 14.5), (12, 19.5)])
+    _poly(p, [(8, 19.5), (16, 19.5)])
 
 
 def _pylon(p, c):
-    _poly(p, [(12, 3), (7, 21)])
-    _poly(p, [(12, 3), (17, 21)])
-    _poly(p, [(8.6, 15), (15.4, 15)])
-    _poly(p, [(9.8, 9), (14.2, 9)])
-    _poly(p, [(4, 8), (20, 8)])
-    _poly(p, [(6, 13), (18, 13)])
-    _poly(p, [(8.6, 15), (15.4, 9)])
-    _poly(p, [(15.4, 15), (8.6, 9)])
+    # narrow lattice tower: two legs, two cross-arms, a brace bar and an X
+    _poly(p, [(12, 2), (8.2, 22)])
+    _poly(p, [(12, 2), (15.8, 22)])
+    _poly(p, [(4.5, 6.5), (19.5, 6.5)])
+    _poly(p, [(7, 11.5), (17, 11.5)])
+    _poly(p, [(9.6, 16.5), (14.4, 16.5)])
+    _poly(p, [(10.0, 11.5), (14.4, 16.5)])
+    _poly(p, [(14.0, 11.5), (9.6, 16.5)])
 
 
 def _inverter(p, c):
-    p.drawRoundedRect(QRectF(4, 4, 16, 16), 3, 3)
-    _poly(p, [(4, 20), (20, 4)])
-    p.drawArc(QRectF(5.5, 5.5, 5, 5), 0, 180 * 16)
-    _poly(p, [(13.5, 17), (15, 15.2), (16.5, 17), (18, 15.2)])
+    # box split by a diagonal: DC ("=") top-left, AC ("~") bottom-right
+    p.drawRoundedRect(QRectF(3, 4, 18, 16), 2.5, 2.5)
+    _poly(p, [(3.4, 19.6), (20.6, 4.4)])
+    _poly(p, [(6.2, 8.2), (10.2, 8.2)])
+    _poly(p, [(6.2, 10.8), (10.2, 10.8)])
+    w = QPainterPath(QPointF(13.2, 16.2))
+    w.cubicTo(14.2, 13.6, 15.7, 13.6, 16.6, 16.2)
+    w.cubicTo(17.5, 18.8, 19.0, 18.8, 19.9, 16.2)
+    p.drawPath(w)
 
 
 def _gear(p, c):
@@ -231,3 +236,45 @@ def icon(name: str, color: str = TEXT) -> QIcon:
 
 def pixmap(name: str, color: str = TEXT, size: int = 64) -> QPixmap:
     return icon(name, color).pixmap(size, size)
+
+
+def glyph(name: str, color: str, size: int, fill: float = 0.92, dpr: int = 2) -> QPixmap:
+    """Crisp icon for custom painting: rendered large, cropped to its real bounding box, scaled to fit
+    `size` x `size` (logical px) and centred, so every glyph is optically centred in a circle."""
+    from PySide6.QtGui import QImage
+    big = 384
+    img = QImage(big, big, QImage.Format_ARGB32_Premultiplied)
+    img.fill(Qt.transparent)
+    p = QPainter(img)
+    p.setRenderHint(QPainter.Antialiasing)
+    pen = QPen(QColor(color), 2.1, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+    p.scale(big / 24, big / 24)
+    p.setPen(pen)
+    p.setBrush(Qt.NoBrush)
+    _FUNCS[name](p, QColor(color))
+    p.end()
+    # bounding box of the non-transparent pixels
+    x0, y0, x1, y1 = big, big, -1, -1
+    for y in range(big):
+        row = img.constScanLine(y)
+        buf = memoryview(row)[: big * 4]
+        for x in range(big):
+            if buf[x * 4 + 3]:
+                if x < x0: x0 = x
+                if x > x1: x1 = x
+                if y < y0: y0 = y
+                if y > y1: y1 = y
+    if x1 < 0:
+        return QPixmap()
+    crop = img.copy(x0, y0, x1 - x0 + 1, y1 - y0 + 1)
+    target = int(size * dpr)
+    k = min(target * fill / crop.width(), target * fill / crop.height())
+    scaled = crop.scaled(max(1, int(crop.width() * k)), max(1, int(crop.height() * k)),
+                         Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+    out = QPixmap(target, target)
+    out.fill(Qt.transparent)
+    q = QPainter(out)
+    q.drawImage((target - scaled.width()) // 2, (target - scaled.height()) // 2, scaled)
+    q.end()
+    out.setDevicePixelRatio(dpr)
+    return out

@@ -78,7 +78,7 @@ class FlowView(QWidget):
     def _pix(self, name: str, color: str, size: int) -> QPixmap:
         key = (name, color, size)
         if key not in self._icons:
-            self._icons[key] = theme.pixmap(name, color, size * 2)
+            self._icons[key] = theme.glyph(name, color, size)
         return self._icons[key]
 
     # ------------------------------------------------------------------ painting
@@ -211,8 +211,8 @@ class FlowView(QWidget):
             p.setPen(QPen(QColor(color), 4, Qt.SolidLine, Qt.RoundCap))
             p.drawArc(rr, 90 * 16, -int(min(frac, 1.0) * 360 * 16))
         # icon
-        isz = 40
-        p.drawPixmap(QRectF(c.x() - isz / 2, c.y() - isz / 2, isz, isz), self._pix(icon, color if frac > 0.001 or icon == "inverter" else theme.MUTED, isz), QRectF(0, 0, isz * 2, isz * 2))
+        isz = 58
+        p.drawPixmap(QPointF(c.x() - isz / 2, c.y() - isz / 2), self._pix(icon, color if frac > 0.001 or icon == "inverter" else theme.MUTED, isz))
         # texts: below the node, or to its right when the node has a link running underneath it
         if label_right:
             x, al, y0 = c.x() + r + 18, Qt.AlignLeft | Qt.AlignVCenter, c.y() - 28
